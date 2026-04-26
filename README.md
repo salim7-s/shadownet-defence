@@ -254,5 +254,5 @@ ShadowNet is fundamentally stateful — the next observation depends on what the
 
 ## Links
 
-- **GitHub:** (https://github.com/salim7-s/shadownet-defence.git)
+- **GitHub:** [salim7-s/shadownet-defence](https://github.com/salim7-s/shadownet-defence)
 - **Hugging Face Space:** [zizoha/shadownet-Cops](https://huggingface.co/spaces/zizoha/shadownet-Cops)
