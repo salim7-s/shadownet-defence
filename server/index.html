@@ -1,0 +1,1923 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ShadowNet 3D Simulation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a0f;
+      --panel: rgba(13, 18, 26, 0.82);
+      --panel-solid: #111821;
+      --line: rgba(148, 163, 184, 0.22);
+      --line-strong: rgba(203, 213, 225, 0.36);
+      --text: #eef6ff;
+      --muted: #9aa9bb;
+      --green: #61d394;
+      --amber: #f5b84b;
+      --red: #ff6b6b;
+      --blue: #70b7ff;
+      --cyan: #50d2d2;
+      --violet: #b99cff;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    button,
+    select {
+      min-height: 38px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: rgba(20, 29, 42, 0.88);
+      color: var(--text);
+    }
+
+    button {
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(238, 246, 255, 0.7);
+      background: rgba(31, 43, 61, 0.96);
+    }
+
+    button:disabled,
+    select:disabled,
+    input:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+    }
+
+    button.primary {
+      background: rgba(36, 116, 116, 0.92);
+      border-color: var(--cyan);
+    }
+
+    button.danger {
+      background: rgba(82, 32, 42, 0.94);
+      border-color: var(--red);
+    }
+
+    select {
+      padding: 0 10px;
+    }
+
+    /* 3D view lives in the center column only — not full-screen “behind” the UI */
+    .scene-viewport {
+      position: relative;
+      width: 100%;
+      min-height: 320px;
+      height: min(52vh, 580px);
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      overflow: hidden;
+      background: #05080d;
+      box-shadow: inset 0 0 48px rgba(0, 0, 0, 0.45), 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .scene-viewport canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      touch-action: none;
+    }
+
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .viewport-hint {
+      margin: 0;
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .hud {
+      position: relative;
+      z-index: 0;
+      min-height: 100vh;
+      pointer-events: none;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .hud > * {
+      pointer-events: auto;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(230px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(7, 10, 15, 0.74);
+      backdrop-filter: blur(16px);
+      padding: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      color: #051714;
+      font-weight: 900;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 18px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 6px;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .top-controls {
+      display: grid;
+      grid-template-columns: 170px repeat(4, 116px);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(240px, 300px) minmax(280px, 1fr) minmax(260px, 340px);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .left,
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .center-top {
+      align-self: start;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .panel,
+    .stat,
+    .phase,
+    .log-entry,
+    .tune-row,
+    .selected-node {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-head h2 {
+      font-size: 12px;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #dceaff;
+    }
+
+    .panel-body {
+      padding: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      color: var(--muted);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .status-pill.ok {
+      color: var(--green);
+      border-color: rgba(97, 211, 148, 0.45);
+      background: rgba(20, 54, 37, 0.36);
+    }
+
+    .status-pill.warn {
+      color: var(--amber);
+      border-color: rgba(245, 184, 75, 0.45);
+      background: rgba(58, 39, 11, 0.4);
+    }
+
+    .status-pill.error {
+      color: var(--red);
+      border-color: rgba(255, 107, 107, 0.45);
+      background: rgba(64, 24, 30, 0.4);
+    }
+
+    .phase-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .phase {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+    }
+
+    .phase.active {
+      border-color: rgba(80, 210, 210, 0.75);
+      box-shadow: 0 0 0 1px rgba(80, 210, 210, 0.18) inset;
+    }
+
+    .phase.done {
+      border-color: rgba(97, 211, 148, 0.55);
+    }
+
+    .phase-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: rgba(33, 46, 64, 0.9);
+      color: #d8e5f5;
+      font-weight: 850;
+      font-size: 12px;
+    }
+
+    .phase-title {
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.2;
+    }
+
+    .phase-copy {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 3px;
+    }
+
+    .stat {
+      padding: 11px;
+      min-height: 82px;
+    }
+
+    .stat span,
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 23px;
+      line-height: 1;
+    }
+
+    .meter {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.18);
+      overflow: hidden;
+      margin-top: 11px;
+    }
+
+    .meter-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+      transition: width 220ms ease, background 220ms ease;
+    }
+
+    .selected-node {
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .node-title {
+      font-size: 13px;
+      font-weight: 850;
+      overflow-wrap: anywhere;
+    }
+
+    .node-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .action-grid button {
+      min-height: 56px;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .action-name {
+      display: block;
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.1;
+    }
+
+    .action-detail {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+    }
+
+    .tune-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .tune-row {
+      padding: 10px;
+    }
+
+    .tune-row label {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 7px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+
+    .curve {
+      width: 100%;
+      height: 118px;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(7, 10, 15, 0.45);
+      margin-top: 10px;
+    }
+
+    .reasoning {
+      display: grid;
+      gap: 8px;
+    }
+
+    .reason-line {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(10, 15, 22, 0.72);
+      padding: 9px;
+      font-size: 12px;
+      line-height: 1.38;
+    }
+
+    .reason-line span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .log {
+      display: grid;
+      gap: 8px;
+      max-height: 290px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .log-entry {
+      border-left: 3px solid var(--cyan);
+      padding: 9px;
+      font-size: 12px;
+      line-height: 1.36;
+    }
+
+    .log-entry.warning {
+      border-left-color: var(--amber);
+    }
+
+    .log-entry.danger {
+      border-left-color: var(--red);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 4;
+      width: min(720px, calc(100vw - 28px));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(245, 184, 75, 0.55);
+      border-radius: 8px;
+      background: rgba(37, 27, 18, 0.92);
+      color: #ffe8b0;
+      backdrop-filter: blur(14px);
+      padding: 10px 12px;
+      font-size: 13px;
+      pointer-events: auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1180px) {
+      .stage {
+        grid-template-columns: minmax(250px, 330px) 1fr;
+      }
+
+      .right {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .center-top {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hud {
+        padding: 10px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .top-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stage {
+        grid-template-columns: 1fr;
+      }
+
+      .right {
+        grid-template-columns: 1fr;
+      }
+
+      .center-top {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .scene-viewport {
+        height: min(42vh, 420px);
+        min-height: 240px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .top-controls,
+      .center-top,
+      .action-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .selected-node {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <header>
+      <div class="brand">
+        <div class="mark">SN</div>
+        <div class="brand-copy">
+          <h1>ShadowNet 3D Simulation</h1>
+          <p class="subtitle">Covert honeypot containment with visible RL-style model tuning</p>
+          <div class="status-row">
+            <span id="backendPill" class="pill status-pill warn">Backend syncing</span>
+            <span id="syncPill" class="pill">No episode</span>
+          </div>
+        </div>
+      </div>
+      <div class="top-controls">
+        <select id="taskSelect" aria-label="Scenario">
+          <option value="easy">Shadow Easy</option>
+          <option value="medium">Shadow Medium</option>
+          <option value="hard">Shadow Hard</option>
+        </select>
+        <button id="autoGood" class="primary">Stealth Sim</button>
+        <button id="autoBad">Aggressive Sim</button>
+        <button id="trainBtn">Tune Model</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <section class="left">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Mission Phase</h2>
+            <span id="stepPill" class="pill">Step 0 / 20</span>
+          </div>
+          <div class="panel-body phase-stack">
+            <div id="phaseTrack" class="phase active">
+              <div class="phase-num">1</div>
+              <div>
+                <div class="phase-title">Track</div>
+                <div class="phase-copy">Watch the attacker before touching production.</div>
+              </div>
+            </div>
+            <div id="phaseContain" class="phase">
+              <div class="phase-num">2</div>
+              <div>
+                <div class="phase-title">Covert Containment</div>
+                <div class="phase-copy">Mirror services, then tunnel traffic into the honeypot.</div>
+              </div>
+            </div>
+            <div id="phaseEvidence" class="phase">
+              <div class="phase-num">3</div>
+              <div>
+                <div class="phase-title">Evidence Lock</div>
+                <div class="phase-copy">Preserve artifacts before volatile evidence decays.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Action Panel</h2>
+            <span id="actionPill" class="pill">web-frontend</span>
+          </div>
+          <div class="panel-body">
+            <div class="selected-node">
+              <div>
+                <div id="selectedTitle" class="node-title">web-frontend</div>
+                <div id="selectedMeta" class="node-meta">Sensitivity 3</div>
+              </div>
+              <span id="selectedState" class="pill">Live</span>
+            </div>
+            <div class="action-grid">
+              <button data-action="observe">
+                <span class="action-name">Observe</span>
+                <span class="action-detail">Low risk signal gathering</span>
+              </button>
+              <button data-action="mirror">
+                <span class="action-name">Mirror</span>
+                <span class="action-detail">Build replica fidelity</span>
+              </button>
+              <button data-action="redirect" class="primary">
+                <span class="action-name">Redirect</span>
+                <span class="action-detail">Open honeypot tunnel</span>
+              </button>
+              <button data-action="partial">
+                <span class="action-name">Partial Covert</span>
+                <span class="action-detail">Fast but suspicious</span>
+              </button>
+              <button data-action="wait">
+                <span class="action-name">Wait</span>
+                <span class="action-detail">Let behavior cool down</span>
+              </button>
+              <button data-action="lock">
+                <span class="action-name">Lock Artifact</span>
+                <span class="action-detail">Secure evidence</span>
+              </button>
+              <button data-action="loud">
+                <span class="action-name">Loud Contain</span>
+                <span class="action-detail">Save asset, lose intel</span>
+              </button>
+              <button data-action="expel" class="danger">
+                <span class="action-name">Expel</span>
+                <span class="action-detail">End episode now</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="center-col" aria-label="Network simulation">
+        <div class="center-top">
+          <div class="stat">
+            <span>Visible Suspicion</span>
+            <strong id="suspicionStat">Low</strong>
+            <div class="meter"><div id="suspicionFill" class="meter-fill"></div></div>
+          </div>
+          <div class="stat">
+            <span>Honeypot Fidelity</span>
+            <strong id="fidelityMetric">85%</strong>
+            <div class="meter"><div id="fidelityFill" class="meter-fill"></div></div>
+          </div>
+          <div class="stat">
+            <span>Projected Reward</span>
+            <strong id="rewardStat">0.52</strong>
+            <div class="meter"><div id="rewardFill" class="meter-fill"></div></div>
+          </div>
+          <div class="stat">
+            <span>Training Episode</span>
+            <strong id="episodeStat">0</strong>
+            <div class="meter"><div id="trainingFill" class="meter-fill"></div></div>
+          </div>
+        </div>
+        <div id="threeRoot" class="scene-viewport" role="img" aria-label="3D network topology"></div>
+        <p class="viewport-hint">3D view — drag to orbit · scroll to zoom · click node to focus</p>
+      </section>
+
+      <section class="right">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Model Tuning</h2>
+            <span id="modelPill" class="pill">Rule baseline</span>
+          </div>
+          <div class="panel-body">
+            <div class="tune-grid">
+              <div class="tune-row">
+                <label for="stealthWeight">Stealth Weight <strong id="stealthValue">0.62</strong></label>
+                <input id="stealthWeight" type="range" min="0" max="1" step="0.01" value="0.62" />
+              </div>
+              <div class="tune-row">
+                <label for="explorationRate">Exploration Rate <strong id="exploreValue">0.22</strong></label>
+                <input id="explorationRate" type="range" min="0" max="1" step="0.01" value="0.22" />
+              </div>
+              <div class="tune-row">
+                <label for="learningRate">Learning Rate <strong id="learnValue">0.18</strong></label>
+                <input id="learningRate" type="range" min="0.02" max="0.5" step="0.01" value="0.18" />
+              </div>
+            </div>
+            <canvas id="rewardCurve" class="curve" width="360" height="118" aria-label="Reward curve"></canvas>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Agent Reasoning</h2>
+            <span id="behaviorPill" class="pill">Passive</span>
+          </div>
+          <div class="panel-body reasoning">
+            <div class="reason-line"><span>Observed</span><div id="reasonObserved">query_frequency=2, probes=0</div></div>
+            <div class="reason-line"><span>Inferred</span><div id="reasonInferred">Attacker suspicion appears low.</div></div>
+            <div class="reason-line"><span>Policy Move</span><div id="reasonAction">Mirror before redirecting.</div></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Event Log</h2>
+            <span id="logCount" class="pill">0 events</span>
+          </div>
+          <div class="panel-body">
+            <div id="eventLog" class="log"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+  </div>
+
+  <div id="alertToast" class="toast hidden">
+    <span id="alertText"></span>
+    <button id="dismissAlert">Dismiss</button>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    // ─── Backend API config ──────────────────────────────────────────────────
+    // This file is served directly by the FastAPI backend, so API calls are
+    // relative (no /api/ prefix needed). The backend URL is the same origin.
+    const API_BASE = "";
+
+    async function apiPost(path, body) {
+      setBusy(true);
+      try {
+        const res = await fetch(`${API_BASE}${path}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          setBackendStatus("error", `POST failed ${path}`);
+          return null;
+        }
+        setBackendStatus("ok", "Backend live");
+        return res.json();
+      } catch {
+        setBackendStatus("error", "Backend offline");
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function apiGet(path) {
+      setBusy(true);
+      try {
+        const res = await fetch(`${API_BASE}${path}`);
+        if (!res.ok) {
+          setBackendStatus("warn", `GET failed ${path}`);
+          return null;
+        }
+        setBackendStatus("ok", "Backend live");
+        return res.json();
+      } catch {
+        setBackendStatus("error", "Backend offline");
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    // Sync SIEM alerts from backend and append to event log (deduplicated)
+    let _lastSiemTotal = 0;
+    async function syncSiem() {
+      const data = await apiGet("/siem-alerts");
+      if (!data || !state) return;
+      if (data.total > _lastSiemTotal) {
+        const newAlerts = (data.alerts || []).slice(-(data.total - _lastSiemTotal));
+        newAlerts.forEach(entry => {
+          const msg = typeof entry === "string" ? entry
+            : `[${entry.severity ?? "INFO"}] ${entry.rule ?? ""}: ${entry.details ?? ""}`.trim();
+          logEvent(msg, entry.severity === "CRITICAL" || entry.severity === "HIGH" ? "danger" : "warning");
+        });
+        _lastSiemTotal = data.total;
+        renderLog();
+      }
+    }
+
+    async function syncReasoning() {
+      const data = await apiGet("/reasoning-log");
+      if (!data || !data.entries || !data.entries.length || !state) return;
+      state.reasoningEntry = data.entries.at(-1);
+      renderReasoning();
+    }
+
+    // Start background polling for SIEM + network state (every 2 s)
+    let _siemPollTimer = null;
+    async function startBackendPolling() {
+      if (_siemPollTimer) return;
+      _siemPollTimer = setInterval(async () => {
+        await syncSiem();
+        await syncReasoning();
+        // Sync network state to update 3D node colors from real backend
+        const ns = await apiGet("/network-state");
+        if (ns && ns.nodes && ns.nodes.length > 0) {
+          syncNetworkStateToScene(ns);
+        }
+      }, 2000);
+    }
+    function stopBackendPolling() {
+      clearInterval(_siemPollTimer);
+      _siemPollTimer = null;
+      _lastSiemTotal = 0;
+    }
+
+    // Apply real backend node states to the 3D scene colours
+    function syncNetworkStateToScene(ns) {
+      if (!state || !nodeMeshes.size) return;
+      ns.nodes.forEach(n => {
+        const entry = nodeMeshes.get(n.id);
+        if (!entry) return;
+        let color = 0x172437, emissive = 0x111a27, ringColor = 0x52627a;
+        if (n.state === "mirroring")   { color = 0x12363a; emissive = 0x0d4447; ringColor = 0x50d2d2; }
+        if (n.state === "honeypot")    { color = 0x153252; emissive = 0x164f8c; ringColor = 0x70b7ff; }
+        if (n.state === "compromised") { color = 0x1e3c28; emissive = 0x1f5b37; ringColor = 0x61d394; }
+        if (n.state === "probed")      { color = 0x382e17; emissive = 0x3a2606; ringColor = 0xf5b84b; }
+        if (n.attacker_here)           { color = 0x4d1d2a; emissive = 0x9e263b; ringColor = 0xff6b6b; }
+        entry.mesh.material.color.setHex(color);
+        entry.mesh.material.emissive.setHex(emissive);
+        entry.ring.material.color.setHex(ringColor);
+      });
+      // Update HUD stats from real backend data
+      if (ns.phase && ns.phase !== state.phase) {
+        state.phase = ns.phase;
+        renderPhases();
+      }
+      if (ns.step !== undefined) {
+        state.step = ns.step;
+        els.stepPill.textContent = `Step ${ns.step} / ${state.scenario.maxSteps}`;
+        els.syncPill.textContent = `Episode ${ns.step}`;
+      }
+      if (ns.honeypot_fidelity !== undefined) {
+        state.fidelity = ns.honeypot_fidelity;
+      }
+      if (ns.attacker_current_node) {
+        state.attackerNode = ns.attacker_current_node;
+      }
+    }
+
+    const root = document.getElementById("threeRoot");
+
+    function viewportSize() {
+      const r = root.getBoundingClientRect();
+      const w = Math.max(200, Math.floor(r.width));
+      const h = Math.max(200, Math.floor(r.height));
+      return { w, h };
+    }
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x070a0f);
+    scene.fog = new THREE.Fog(0x070a0f, 34, 86);
+
+    const vs0 = viewportSize();
+    const camera = new THREE.PerspectiveCamera(50, vs0.w / vs0.h, 0.1, 160);
+    camera.position.set(0, 16, 27);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(vs0.w, vs0.h);
+    root.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0, 0);
+    controls.maxDistance = 54;
+    controls.minDistance = 14;
+
+    scene.add(new THREE.HemisphereLight(0xcfe7ff, 0x16202d, 1.3));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    keyLight.position.set(-12, 18, 14);
+    scene.add(keyLight);
+
+    const grid = new THREE.GridHelper(52, 52, 0x2a3748, 0x16202a);
+    grid.position.y = -2.2;
+    scene.add(grid);
+
+    const els = {
+      taskSelect: document.getElementById("taskSelect"),
+      resetBtn: document.getElementById("resetBtn"),
+      autoGood: document.getElementById("autoGood"),
+      autoBad: document.getElementById("autoBad"),
+      trainBtn: document.getElementById("trainBtn"),
+      dismissAlert: document.getElementById("dismissAlert"),
+      alertToast: document.getElementById("alertToast"),
+      alertText: document.getElementById("alertText"),
+      stepPill: document.getElementById("stepPill"),
+      phaseTrack: document.getElementById("phaseTrack"),
+      phaseContain: document.getElementById("phaseContain"),
+      phaseEvidence: document.getElementById("phaseEvidence"),
+      selectedTitle: document.getElementById("selectedTitle"),
+      selectedMeta: document.getElementById("selectedMeta"),
+      selectedState: document.getElementById("selectedState"),
+      actionPill: document.getElementById("actionPill"),
+      suspicionStat: document.getElementById("suspicionStat"),
+      suspicionFill: document.getElementById("suspicionFill"),
+      fidelityMetric: document.getElementById("fidelityMetric"),
+      fidelityFill: document.getElementById("fidelityFill"),
+      rewardStat: document.getElementById("rewardStat"),
+      rewardFill: document.getElementById("rewardFill"),
+      episodeStat: document.getElementById("episodeStat"),
+      trainingFill: document.getElementById("trainingFill"),
+      modelPill: document.getElementById("modelPill"),
+      behaviorPill: document.getElementById("behaviorPill"),
+      reasonObserved: document.getElementById("reasonObserved"),
+      reasonInferred: document.getElementById("reasonInferred"),
+      reasonAction: document.getElementById("reasonAction"),
+      eventLog: document.getElementById("eventLog"),
+      logCount: document.getElementById("logCount"),
+      stealthWeight: document.getElementById("stealthWeight"),
+      explorationRate: document.getElementById("explorationRate"),
+      learningRate: document.getElementById("learningRate"),
+      stealthValue: document.getElementById("stealthValue"),
+      exploreValue: document.getElementById("exploreValue"),
+      learnValue: document.getElementById("learnValue"),
+      rewardCurve: document.getElementById("rewardCurve")
+    };
+    els.backendPill = document.getElementById("backendPill");
+    els.syncPill = document.getElementById("syncPill");
+    els.actionButtons = [...document.querySelectorAll("[data-action]")];
+
+    const scenarios = {
+      easy: {
+        maxSteps: 20,
+        nodes: [
+          node("web-frontend", "web", "frontend", -13, 0, 0, 3),
+          node("auth-service", "auth", "service", -6, 0, -6, 6),
+          node("internal-api", "internal", "api", 1, 0, 0, 7),
+          node("user-database", "user", "database", 9, 0, -6, 10),
+          node("logging-service", "logging", "service", 9, 0, 6, 5)
+        ],
+        edges: [["web-frontend", "auth-service"], ["auth-service", "internal-api"], ["internal-api", "user-database"], ["internal-api", "logging-service"]],
+        path: [{ step: 1, target: "web-frontend" }, { step: 3, target: "auth-service" }, { step: 6, target: "internal-api" }, { step: 9, target: "user-database" }]
+      },
+      medium: {
+        maxSteps: 16,
+        nodes: [
+          node("vpn-gateway", "vpn", "gateway", -15, 0, 1, 4),
+          node("web-frontend", "web", "frontend", -10, 0, -8, 3),
+          node("auth-service", "auth", "service", -4, 0, -9, 7),
+          node("internal-api", "internal", "api", 3, 0, -1, 8),
+          node("file-server", "file", "server", -4, 0, 8, 7),
+          node("user-database", "user", "database", 11, 0, -9, 10),
+          node("admin-panel", "admin", "panel", 12, 0, 7, 9),
+          node("logging-service", "logging", "service", -12, 0, 8, 5)
+        ],
+        edges: [["vpn-gateway", "web-frontend"], ["web-frontend", "auth-service"], ["auth-service", "internal-api"], ["internal-api", "user-database"], ["internal-api", "admin-panel"], ["internal-api", "file-server"], ["file-server", "logging-service"], ["vpn-gateway", "logging-service"]],
+        path: [{ step: 1, target: "vpn-gateway" }, { step: 2, target: "web-frontend" }, { step: 5, target: "auth-service" }, { step: 8, target: "internal-api" }, { step: 11, target: "admin-panel" }]
+      },
+      hard: {
+        maxSteps: 12,
+        nodes: [
+          node("vpn-gateway", "vpn", "gateway", -16, 0, 1, 4),
+          node("web-frontend", "web", "frontend", -11, 0, -10, 3),
+          node("auth-service", "auth", "service", -5, 0, -12, 8),
+          node("internal-api", "internal", "api", 2, 0, -2, 8),
+          node("payment-processor", "payment", "processor", 10, 0, -12, 10),
+          node("user-database", "user", "database", 16, 0, -2, 10),
+          node("admin-panel", "admin", "panel", 11, 0, 10, 9),
+          node("file-server", "file", "server", -3, 0, 11, 7),
+          node("logging-service", "logging", "service", -13, 0, 10, 5)
+        ],
+        edges: [["vpn-gateway", "web-frontend"], ["web-frontend", "auth-service"], ["auth-service", "internal-api"], ["internal-api", "payment-processor"], ["internal-api", "user-database"], ["internal-api", "admin-panel"], ["internal-api", "file-server"], ["file-server", "logging-service"], ["vpn-gateway", "logging-service"]],
+        path: [{ step: 1, target: "vpn-gateway" }, { step: 2, target: "auth-service" }, { step: 4, target: "internal-api" }, { step: 6, target: "payment-processor" }, { step: 8, target: "user-database" }]
+      }
+    };
+
+    function node(id, label, sub, x, y, z, sensitivity) {
+      return { id, label, sub, x, y, z, sensitivity };
+    }
+
+    const simGroup = new THREE.Group();
+    const tunnelGroup = new THREE.Group();
+    const pulseGroup = new THREE.Group();
+    scene.add(simGroup, tunnelGroup, pulseGroup);
+
+    const nodeMeshes = new Map();
+    const labels = new Map();
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const attackerPacket = makeSphere(0.42, 0xff4f64, 0xff4f64, 1.2);
+    attackerPacket.position.set(-18, 1, 0);
+    scene.add(attackerPacket);
+
+    const honeypotCore = makeSphere(1.35, 0x1f72ff, 0x70b7ff, 0.8);
+    honeypotCore.position.set(17, 1.05, 0);
+    scene.add(honeypotCore);
+
+    const honeypotRing = new THREE.Mesh(
+      new THREE.TorusGeometry(2.1, 0.035, 8, 96),
+      new THREE.MeshBasicMaterial({ color: 0x70b7ff, transparent: true, opacity: 0.7 })
+    );
+    honeypotRing.position.copy(honeypotCore.position);
+    honeypotRing.rotation.x = Math.PI / 2;
+    scene.add(honeypotRing);
+
+    let state;
+    let autoTimer = null;
+    let tuneTimer = null;
+    let pendingRequests = 0;
+    let rewardSeries = [0.12, 0.18, 0.24, 0.31];
+
+    function freshState() {
+      const scenario = scenarios[els.taskSelect.value];
+      return {
+        scenario,
+        step: 0,
+        phase: "track",
+        selected: scenario.nodes[0].id,
+        attackerNode: null,
+        mirrored: new Set(),
+        honeypot: new Set(),
+        observed: new Set(),
+        safe: new Set(),
+        locked: 0,
+        totalArtifacts: 4,
+        fidelity: 0.85,
+        hiddenRisk: 0,
+        peakRisk: 0,
+        probes: 0,
+        lateral: 0,
+        query: 2,
+        outcome: "clean",
+        alerted: false,
+        assetsLost: 0,
+        trainingEpisode: 0,
+        policyReward: rewardSeries.at(-1) || 0.24,
+        events: [],
+        validActions: new Set(["observe", "mirror", "redirect", "partial", "wait", "lock", "loud", "expel"]),
+        reasoningEntry: null
+      };
+    }
+
+    function actionToBackend(action) {
+      return {
+        observe: "observe",
+        mirror: "mirror_traffic",
+        redirect: "redirect",
+        partial: "partial_covert",
+        wait: "wait_and_track",
+        lock: "lock_artifact",
+        loud: "loud_contain",
+        expel: "emergency_expel",
+      }[action] ?? "wait_and_track";
+    }
+
+    function backendToUiAction(action) {
+      return {
+        observe: "observe",
+        mirror_traffic: "mirror",
+        redirect: "redirect",
+        partial_covert: "partial",
+        wait_and_track: "wait",
+        lock_artifact: "lock",
+        loud_contain: "loud",
+        emergency_expel: "expel",
+      }[action] ?? action;
+    }
+
+    function setBackendStatus(kind, text) {
+      els.backendPill.textContent = text;
+      els.backendPill.className = `pill status-pill ${kind}`;
+    }
+
+    function setBusy(isBusy) {
+      pendingRequests += isBusy ? 1 : -1;
+      pendingRequests = clamp(pendingRequests, 0, 99);
+      const disabled = pendingRequests > 0;
+      [els.taskSelect, els.resetBtn, els.autoGood, els.autoBad, els.trainBtn, ...els.actionButtons].forEach((el) => {
+        if (el) el.disabled = disabled;
+      });
+      if (state) {
+        els.syncPill.textContent = disabled ? "Sync in progress" : `Episode ${state.step}`;
+      }
+    }
+
+    function makeSphere(size, color, emissive, intensity) {
+      return new THREE.Mesh(
+        new THREE.SphereGeometry(size, 32, 20),
+        new THREE.MeshStandardMaterial({
+          color,
+          emissive,
+          emissiveIntensity: intensity,
+          roughness: 0.45,
+          metalness: 0.2
+        })
+      );
+    }
+
+    // Node type → icon character mapping
+    function nodeIcon(id) {
+      const id_lower = id.toLowerCase();
+      if (id_lower.includes("database") || id_lower.includes("db")) return "🗄";
+      if (id_lower.includes("auth") || id_lower.includes("login")) return "🔐";
+      if (id_lower.includes("payment") || id_lower.includes("finance")) return "💳";
+      if (id_lower.includes("admin")) return "⚙";
+      if (id_lower.includes("vpn") || id_lower.includes("gateway")) return "🌐";
+      if (id_lower.includes("api") || id_lower.includes("internal")) return "⚡";
+      if (id_lower.includes("log") || id_lower.includes("siem")) return "📋";
+      if (id_lower.includes("file") || id_lower.includes("storage")) return "📁";
+      if (id_lower.includes("web") || id_lower.includes("frontend")) return "🖥";
+      return "🔲";
+    }
+
+    function makeLabel(nodeId, sensitivity) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 640;
+      canvas.height = 200;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Sensitivity tier color accent
+      const tierColor = sensitivity >= 8 ? "#ff6b6b"
+                       : sensitivity >= 6 ? "#f5b84b"
+                       : sensitivity >= 4 ? "#70b7ff"
+                       : "#61d394";
+
+      // Background pill with left-colored border
+      ctx.fillStyle = "rgba(7, 10, 15, 0.88)";
+      ctx.strokeStyle = tierColor;
+      ctx.lineWidth = 5;
+      roundRect(ctx, 12, 28, 616, 148, 18);
+      ctx.fill();
+      ctx.stroke();
+
+      // Left accent bar (like VS Code's colored file bar)
+      ctx.fillStyle = tierColor;
+      roundRect(ctx, 12, 28, 12, 148, [18, 0, 0, 18]);
+      ctx.fill();
+
+      // Icon
+      ctx.font = "52px sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(nodeIcon(nodeId), 38, 102);
+
+      // Node name — full name, bold, white
+      ctx.fillStyle = "#eef6ff";
+      ctx.font = "bold 52px \"Segoe UI\", Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      const displayName = nodeId.replace(/-/g, " ");
+      ctx.fillText(displayName, 106, 88);
+
+      // Sensitivity badge
+      const tier = sensitivity >= 8 ? "CRITICAL" : sensitivity >= 6 ? "HIGH" : sensitivity >= 4 ? "MED" : "LOW";
+      ctx.fillStyle = tierColor;
+      ctx.font = "bold 26px \"Segoe UI\", Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(tier, 108, 136);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
+      // Wider sprite so full name is readable
+      sprite.scale.set(7.2, 2.2, 1);
+      return sprite;
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      // r can be a single radius or an array [tl, tr, br, bl]
+      const radii = Array.isArray(r)
+        ? { tl: r[0], tr: r[1], br: r[2], bl: r[3] }
+        : { tl: r, tr: r, br: r, bl: r };
+      ctx.beginPath();
+      ctx.moveTo(x + radii.tl, y);
+      ctx.arcTo(x + w, y,     x + w, y + h, radii.tr);
+      ctx.arcTo(x + w, y + h, x,     y + h, radii.br);
+      ctx.arcTo(x,     y + h, x,     y,     radii.bl);
+      ctx.arcTo(x,     y,     x + w, y,     radii.tl);
+      ctx.closePath();
+    }
+
+    function resetScene() {
+      simGroup.clear();
+      tunnelGroup.clear();
+      pulseGroup.clear();
+      nodeMeshes.clear();
+      labels.clear();
+
+      state.scenario.edges.forEach(([a, b]) => {
+        const start = getNodeVector(a);
+        const end = getNodeVector(b);
+        simGroup.add(makeLine(start, end, 0x42506a, 0.65));
+      });
+
+      state.scenario.nodes.forEach((item) => {
+        const group = new THREE.Group();
+
+        // Node sphere — size scales slightly with sensitivity
+        const nodeRadius = 0.72 + (item.sensitivity / 10) * 0.38;
+        const mesh = makeSphere(nodeRadius, 0x172437, 0x111a27, 0.3);
+        mesh.userData.nodeId = item.id;
+        mesh.position.set(item.x, item.y, item.z);
+        group.add(mesh);
+
+        const ring = new THREE.Mesh(
+          new THREE.TorusGeometry(nodeRadius + 0.3, 0.035, 8, 64),
+          new THREE.MeshBasicMaterial({ color: 0x52627a, transparent: true, opacity: 0.8 })
+        );
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(item.x, item.y - 0.52, item.z);
+        group.add(ring);
+
+        // Prominent name label — shows full name + icon + tier directly
+        const label = makeLabel(item.id, item.sensitivity);
+        label.position.set(item.x, item.y + nodeRadius + 1.5, item.z);
+        group.add(label);
+
+        nodeMeshes.set(item.id, { mesh, ring, group });
+        labels.set(item.id, label);
+        simGroup.add(group);
+      });
+
+    }
+
+    function makeLine(start, end, color, opacity) {
+      const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+      return new THREE.Line(
+        geometry,
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+      );
+    }
+
+    function makeTunnel(start, end, color, opacity) {
+      const curve = new THREE.CatmullRomCurve3([
+        start,
+        start.clone().lerp(end, 0.45).add(new THREE.Vector3(0, 3.5, 0)),
+        end
+      ]);
+      const points = curve.getPoints(72);
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(
+        geometry,
+        new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+      );
+      line.userData.birth = performance.now();
+      line.userData.pulse = true;
+      return line;
+    }
+
+    function getNode(id) {
+      return state.scenario.nodes.find((item) => item.id === id);
+    }
+
+    function getNodeVector(id) {
+      const item = getNode(id);
+      return new THREE.Vector3(item.x, item.y, item.z);
+    }
+
+    async function reset() {
+      clearInterval(autoTimer);
+      clearInterval(tuneTimer);
+      autoTimer = null;
+      tuneTimer = null;
+      stopBackendPolling();
+      state = freshState();
+      resetScene();
+      attackerPacket.position.set(-18, 1, 0);
+      els.alertToast.classList.add("hidden");
+      els.syncPill.textContent = "No episode";
+      logEvent("Mission reset. Syncing with backend...", "info");
+      render();
+      // Call real backend /reset so the backend episode state is in sync
+      const taskMap = { easy: "shadow-easy", medium: "shadow-medium", hard: "shadow-hard" };
+      const taskName = taskMap[els.taskSelect.value] ?? "shadow-easy";
+      const obs = await apiPost("/reset", { task_name: taskName });
+      if (obs) {
+        logEvent(`Backend synced: ${obs.task_name} | attacker: ${obs.attacker_profile} | ${obs.phase} phase`, "info");
+        applyObsToState(obs);
+        render();
+      } else {
+        showAlert("Backend reset failed. Frontend is showing unsynced local state.");
+      }
+      startBackendPolling();
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function behaviorFromRisk() {
+      if (state.hiddenRisk >= 0.85) return "alerted";
+      if (state.hiddenRisk >= 0.6) return "aggressive";
+      if (state.hiddenRisk >= 0.3) return "cautious";
+      return "passive";
+    }
+
+    function signalMap() {
+      return {
+        passive: { query: 2, lateral: 0 },
+        cautious: { query: 5, lateral: 1 },
+        aggressive: { query: 12, lateral: 3 },
+        alerted: { query: 25, lateral: 5 }
+      }[behaviorFromRisk()];
+    }
+
+    function updateSignals() {
+      const signal = signalMap();
+      state.query = signal.query + Math.min(6, state.probes);
+      state.lateral = signal.lateral;
+    }
+
+    function score() {
+      const assetSafety = 1 - state.assetsLost / Math.max(1, state.scenario.nodes.length);
+      const forensic = state.alerted ? Math.min(0.1, state.locked / state.totalArtifacts) : state.locked / state.totalArtifacts;
+      const stealth = 1 - state.peakRisk;
+      const efficiency = 1 - (state.step / state.scenario.maxSteps * 0.5);
+      return clamp(assetSafety * 0.35 + forensic * 0.35 + stealth * 0.2 + efficiency * 0.1, 0.01, 0.99);
+    }
+
+    function inferSuspicion() {
+      if (state.alerted) return "Collapsed";
+      if (state.query >= 12 || state.probes >= 4 || state.outcome === "flagged") return "High";
+      if (state.query >= 5 || state.probes >= 2 || state.outcome === "minor anomaly") return "Medium";
+      return "Low";
+    }
+
+    function riskPercent() {
+      const suspicion = inferSuspicion();
+      if (suspicion === "Collapsed") return 100;
+      if (suspicion === "High") return 78;
+      if (suspicion === "Medium") return 48;
+      return 18;
+    }
+
+    function riskColor(value) {
+      if (value >= 70) return "var(--red)";
+      if (value >= 35) return "var(--amber)";
+      return "var(--green)";
+    }
+
+    function addRisk(amount) {
+      if (state.alerted) return;
+      state.hiddenRisk = clamp(state.hiddenRisk + amount, 0, 1);
+      state.peakRisk = Math.max(state.peakRisk, state.hiddenRisk);
+      if (state.hiddenRisk >= 0.85) {
+        state.alerted = true;
+        state.outcome = "flagged";
+        logEvent("ATTACKER ALERTED: logs purged, access burned, forensic value capped.", "danger");
+        showAlert("ATTACKER ALERTED: logs purged, access burned, forensic value capped.");
+      }
+    }
+
+    function coolDown(amount) {
+      if (!state.alerted) state.hiddenRisk = clamp(state.hiddenRisk - amount, 0, 1);
+    }
+
+    function currentNode() {
+      return getNode(state.selected);
+    }
+
+    // Apply a /step or /reset observation from the backend into local state
+    function applyObsToState(obs) {
+      if (!obs) return;
+      state.phase   = obs.phase ?? state.phase;
+      state.step    = obs.step  ?? state.step;
+      state.alerted = (obs.attacker_behavior === "alerted");
+      state.outcome = obs.last_action_outcome ?? state.outcome;
+      state.fidelity = (obs.honeypot_fidelity !== undefined) ? obs.honeypot_fidelity : state.fidelity;
+      // Derive visible suspicion from observable signals (never from hidden detection_risk)
+      state.query   = obs.attacker_query_frequency ?? state.query;
+      state.lateral = obs.attacker_lateral_attempts ?? state.lateral;
+      state.probes  = obs.honeypot_probe_count ?? state.probes;
+      if (obs.mirrored_nodes) obs.mirrored_nodes.forEach(n => state.mirrored.add(n));
+      if (obs.honeypot_nodes) obs.honeypot_nodes.forEach(n => state.honeypot.add(n));
+      if (obs.visible_nodes)  obs.visible_nodes.forEach(n  => state.observed.add(n));
+      if (obs.valid_actions) {
+        state.validActions = new Set(obs.valid_actions.map(backendToUiAction));
+      }
+      if (obs.decision_log) {
+        const lines = String(obs.decision_log).split("\n");
+        state.reasoningEntry = {
+          observed: { summary: lines[0]?.replace("OBSERVED: ", "") ?? "" },
+          inferred: lines[1]?.replace("INFERRED: ", "") ?? "",
+          action: lines[2]?.replace("ACTION: ", "") ?? "",
+          reason: lines[3]?.replace("REASON: ", "") ?? "",
+        };
+      }
+      if (obs.reward != null) {
+        state.policyReward = obs.reward;
+        rewardSeries.push(obs.reward);
+        rewardSeries = rewardSeries.slice(-48);
+      }
+      if (obs.done) {
+        clearInterval(autoTimer); autoTimer = null;
+        stopBackendPolling();
+        logEvent(`Episode done. Final reward: ${obs.reward?.toFixed(3) ?? "?"}`, "info");
+      }
+    }
+
+    async function step(action) {
+      if (state.step >= state.scenario.maxSteps || (state.alerted && action !== "expel")) {
+        render();
+        return;
+      }
+
+      const target = currentNode();
+      state.step += 1;
+      state.outcome = "smooth";
+
+      if (action === "observe") {
+        state.observed.add(target.id);
+        coolDown(0.02);
+        addPulse(target.id, 0xf5b84b);
+        logEvent(`Observed ${target.id}. Passive signals improved.`, "info");
+      }
+
+      if (action === "mirror") {
+        state.mirrored.add(target.id);
+        state.fidelity = clamp(state.fidelity + 0.06, 0, 0.99);
+        coolDown(0.05);
+        tunnelGroup.add(makeTunnel(getNodeVector(target.id).add(new THREE.Vector3(0, 0.7, 0)), honeypotCore.position.clone(), 0x50d2d2, 0.58));
+        logEvent(`Mirrored ${target.id}. Replica calibration increased.`, "info");
+      }
+
+      if (action === "redirect") {
+        const calibrated = state.mirrored.has(target.id);
+        state.honeypot.add(target.id);
+        tunnelGroup.add(makeTunnel(getNodeVector(target.id).add(new THREE.Vector3(0, 1.0, 0)), honeypotCore.position.clone(), 0x70b7ff, 0.9));
+        if (calibrated && state.fidelity >= 0.8) {
+          coolDown(0.04);
+          state.outcome = "smooth";
+          logEvent(`Redirected ${target.id} through a stable honeypot tunnel.`, "info");
+        } else {
+          state.probes += 2;
+          state.outcome = state.fidelity < 0.7 ? "flagged" : "minor anomaly";
+          addRisk(calibrated ? 0.08 : 0.18);
+          logEvent(`Redirected ${target.id} before enough calibration. Probes increased.`, "warning");
+        }
+      }
+
+      if (action === "partial") {
+        state.honeypot.add(target.id);
+        state.probes += 3;
+        state.fidelity = clamp(state.fidelity - 0.08, 0.35, 0.99);
+        state.outcome = "flagged";
+        addRisk(0.24);
+        tunnelGroup.add(makeTunnel(getNodeVector(target.id).add(new THREE.Vector3(0, 1.0, 0)), honeypotCore.position.clone(), 0xff6b6b, 0.9));
+        logEvent(`Partial covert tunnel opened on ${target.id}. Fast, but noisy.`, "warning");
+      }
+
+      if (action === "wait") {
+        coolDown(0.04);
+        state.fidelity = clamp(state.fidelity + 0.02, 0, 0.99);
+        logEvent("Waited and tracked. Suspicion indicators cooled.", "info");
+      }
+
+      if (action === "lock") {
+        if (state.phase === "evidence" && state.locked < state.totalArtifacts) {
+          state.locked += 1;
+          addPulse(target.id, 0x61d394);
+          logEvent(`Locked forensic artifact ${state.locked} of ${state.totalArtifacts}.`, "info");
+        } else {
+          state.outcome = "minor anomaly";
+          logEvent("Artifact lock attempted before evidence phase.", "warning");
+        }
+      }
+
+      if (action === "loud") {
+        state.safe.add(target.id);
+        state.locked = 0;
+        state.outcome = "loud contain";
+        addPulse(target.id, 0xff6b6b);
+        logEvent(`Loud containment on ${target.id}. Asset protected, intelligence lost.`, "warning");
+      }
+
+      if (action === "expel") {
+        state.alerted = true;
+        state.hiddenRisk = Math.max(state.hiddenRisk, 0.25);
+        state.peakRisk = Math.max(state.peakRisk, state.hiddenRisk);
+        state.outcome = "expelled";
+        logEvent("Emergency expel triggered. Episode ends with minimal intelligence.", "danger");
+      }
+
+      if (state.fidelity < 0.8 && !state.alerted) addRisk(0.02);
+      coolDown(0.01);
+      advanceAttacker();
+      progressPhase();
+      updateSignals();
+      render();
+      // Sync action to real backend (fire-and-forget; updates backend state)
+      const obs = await apiPost("/step", {
+        action: {
+          action_type: actionToBackend(action),
+          target: state.selected ?? null,
+        },
+      });
+      if (obs) {
+        applyObsToState(obs);
+        render();
+      } else {
+        showAlert("Backend step failed. Controls are temporarily out of sync.");
+      }
+    }
+
+    function addPulse(nodeId, color) {
+      const origin = getNodeVector(nodeId);
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.42, 0.035, 8, 96),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 })
+      );
+      ring.position.set(origin.x, origin.y - 0.5, origin.z);
+      ring.rotation.x = Math.PI / 2;
+      ring.userData.birth = performance.now();
+      pulseGroup.add(ring);
+    }
+
+    function advanceAttacker() {
+      const next = state.scenario.path.find((move) => move.step === state.step);
+      if (!next || state.alerted) return;
+      state.attackerNode = next.target;
+      state.selected = next.target;
+      if (!state.honeypot.has(next.target) && (next.target.includes("database") || next.target.includes("payment"))) {
+        state.assetsLost += 1;
+        logEvent(`${next.target} touched before containment. Asset safety reduced.`, "warning");
+      } else {
+        logEvent(`Attacker packet moved toward ${next.target}.`, "info");
+      }
+    }
+
+    function progressPhase() {
+      if (state.honeypot.size >= Math.min(2, state.scenario.path.length - 1) && state.phase !== "evidence") {
+        state.phase = "evidence";
+        logEvent("Containment stable. Evidence lock phase started.", "info");
+      } else if (state.step >= 2 && state.phase === "track") {
+        state.phase = "contain";
+        logEvent("Covert containment window open. Mirror before redirecting.", "info");
+      }
+    }
+
+    function runStrategy(kind) {
+      clearInterval(autoTimer);
+      autoTimer = setInterval(() => {
+        if (state.step >= state.scenario.maxSteps || state.alerted) {
+          clearInterval(autoTimer);
+          autoTimer = null;
+          return;
+        }
+        const target = state.scenario.path[Math.min(Math.floor(state.step / 3), state.scenario.path.length - 1)]?.target || state.scenario.nodes[0].id;
+        state.selected = target;
+        if (kind === "bad") {
+          step("redirect");
+          return;
+        }
+        if (state.phase === "evidence") step("lock");
+        else if (!state.observed.has(target)) step("observe");
+        else if (!state.mirrored.has(target)) step("mirror");
+        else if (!state.honeypot.has(target)) step("redirect");
+        else step("wait");
+      }, 860);
+    }
+
+    function tuneModel() {
+      clearInterval(tuneTimer);
+      els.modelPill.textContent = "Tuning";
+      tuneTimer = setInterval(() => {
+        state.trainingEpisode += 1;
+        const stealth = Number(els.stealthWeight.value);
+        const explore = Number(els.explorationRate.value);
+        const lr = Number(els.learningRate.value);
+        const target = 0.22 + stealth * 0.48 + (1 - explore) * 0.16 + state.fidelity * 0.12;
+        const noise = (Math.random() - 0.46) * explore * 0.12;
+        state.policyReward = clamp(state.policyReward + (target - state.policyReward) * lr + noise, 0.01, 0.91);
+        rewardSeries.push(state.policyReward);
+        rewardSeries = rewardSeries.slice(-48);
+        if (state.trainingEpisode % 5 === 0) {
+          state.fidelity = clamp(state.fidelity + 0.01 * stealth, 0, 0.99);
+          logEvent(`Tuning episode ${state.trainingEpisode}: reward ${state.policyReward.toFixed(2)}.`, "info");
+        }
+        drawCurve();
+        renderStats();
+      }, 460);
+    }
+
+    function drawCurve() {
+      const canvas = els.rewardCurve;
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(7, 10, 15, 0.35)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.22)";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i += 1) {
+        const y = (h / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "#50d2d2";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      rewardSeries.forEach((value, index) => {
+        const x = rewardSeries.length === 1 ? 0 : (index / (rewardSeries.length - 1)) * (w - 18) + 9;
+        const y = h - 10 - value * (h - 22);
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.fillStyle = "#eef6ff";
+      ctx.font = "12px Segoe UI, Arial";
+      ctx.fillText(`reward ${rewardSeries.at(-1).toFixed(2)}`, 12, 18);
+    }
+
+    function logEvent(message, kind) {
+      state.events.unshift({ message, kind, step: state.step });
+      state.events = state.events.slice(0, 12);
+    }
+
+    function showAlert(message) {
+      els.alertText.textContent = message;
+      els.alertToast.classList.remove("hidden");
+    }
+
+    function renderSceneState() {
+      nodeMeshes.forEach(({ mesh, ring }, id) => {
+        const selected = id === state.selected;
+        const isAttacker = id === state.attackerNode;
+        let color = 0x172437;
+        let emissive = 0x111a27;
+        let ringColor = 0x52627a;
+        if (state.observed.has(id)) {
+          color = 0x382e17;
+          emissive = 0x3a2606;
+          ringColor = 0xf5b84b;
+        }
+        if (state.mirrored.has(id)) {
+          color = 0x12363a;
+          emissive = 0x0d4447;
+          ringColor = 0x50d2d2;
+        }
+        if (state.honeypot.has(id)) {
+          color = 0x153252;
+          emissive = 0x164f8c;
+          ringColor = 0x70b7ff;
+        }
+        if (state.safe.has(id)) {
+          color = 0x1e3c28;
+          emissive = 0x1f5b37;
+          ringColor = 0x61d394;
+        }
+        if (isAttacker) {
+          color = 0x4d1d2a;
+          emissive = 0x9e263b;
+          ringColor = 0xff6b6b;
+        }
+        mesh.material.color.setHex(color);
+        mesh.material.emissive.setHex(emissive);
+        mesh.material.emissiveIntensity = selected || isAttacker ? 1.2 : 0.45;
+        mesh.scale.setScalar(selected ? 1.23 : 1);
+        ring.material.color.setHex(ringColor);
+        ring.material.opacity = selected ? 1 : 0.74;
+      });
+    }
+
+    function renderPhases() {
+      [els.phaseTrack, els.phaseContain, els.phaseEvidence].forEach((item) => item.classList.remove("active", "done"));
+      if (state.phase === "track") els.phaseTrack.classList.add("active");
+      if (state.phase === "contain") {
+        els.phaseTrack.classList.add("done");
+        els.phaseContain.classList.add("active");
+      }
+      if (state.phase === "evidence") {
+        els.phaseTrack.classList.add("done");
+        els.phaseContain.classList.add("done");
+        els.phaseEvidence.classList.add("active");
+      }
+    }
+
+    function setFill(el, value, color) {
+      el.style.width = `${clamp(value, 0, 100)}%`;
+      el.style.background = color;
+    }
+
+    function renderStats() {
+      const suspicionValue = riskPercent();
+      const finalReward = Math.max(score(), state.policyReward * 0.76);
+      els.stepPill.textContent = `Step ${state.step} / ${state.scenario.maxSteps}`;
+      els.suspicionStat.textContent = inferSuspicion();
+      els.fidelityMetric.textContent = `${Math.round(state.fidelity * 100)}%`;
+      els.rewardStat.textContent = finalReward.toFixed(2);
+      els.episodeStat.textContent = String(state.trainingEpisode);
+      setFill(els.suspicionFill, suspicionValue, riskColor(suspicionValue));
+      setFill(els.fidelityFill, state.fidelity * 100, state.fidelity >= 0.8 ? "var(--green)" : "var(--amber)");
+      setFill(els.rewardFill, finalReward * 100, finalReward > 0.65 ? "var(--green)" : "var(--cyan)");
+      setFill(els.trainingFill, Math.min(100, state.trainingEpisode * 3), "var(--violet)");
+      els.modelPill.textContent = state.trainingEpisode > 0 ? `Reward ${state.policyReward.toFixed(2)}` : "Rule baseline";
+    }
+
+    function renderSelected() {
+      const item = currentNode();
+      els.selectedTitle.textContent = item.id;
+      els.selectedMeta.textContent = `Sensitivity ${item.sensitivity} | ${state.phase} phase`;
+      els.actionPill.textContent = item.id;
+      if (state.honeypot.has(item.id)) els.selectedState.textContent = "Honeypot";
+      else if (state.mirrored.has(item.id)) els.selectedState.textContent = "Mirrored";
+      else if (state.observed.has(item.id)) els.selectedState.textContent = "Observed";
+      else els.selectedState.textContent = "Live";
+    }
+
+    function renderReasoning() {
+      if (state.reasoningEntry) {
+        const observed = state.reasoningEntry.observed?.summary
+          || (typeof state.reasoningEntry.observed === "string" ? state.reasoningEntry.observed : null);
+        els.behaviorPill.textContent = behaviorFromRisk()[0].toUpperCase() + behaviorFromRisk().slice(1);
+        els.reasonObserved.textContent = observed || JSON.stringify(state.reasoningEntry.observed ?? {});
+        els.reasonInferred.textContent = state.reasoningEntry.inferred || "Awaiting backend reasoning.";
+        els.reasonAction.textContent = state.reasoningEntry.reason
+          ? `${state.reasoningEntry.action || "hold"} — ${state.reasoningEntry.reason}`
+          : (state.reasoningEntry.action || "Awaiting backend action.");
+        return;
+      }
+      const suspicion = inferSuspicion();
+      els.behaviorPill.textContent = behaviorFromRisk()[0].toUpperCase() + behaviorFromRisk().slice(1);
+      els.reasonObserved.textContent = `query_frequency=${state.query}, probes=${state.probes}, lateral_attempts=${state.lateral}, outcome=${state.outcome}`;
+      if (suspicion === "High" || suspicion === "Collapsed") {
+        els.reasonInferred.textContent = "Behavior implies the attacker is testing the environment.";
+        els.reasonAction.textContent = "Wait or mirror before another redirect. Avoid noisy tunnel changes.";
+      } else if (state.phase === "evidence") {
+        els.reasonInferred.textContent = "Containment looks stable enough for forensic preservation.";
+        els.reasonAction.textContent = "Lock volatile artifacts while the honeypot remains convincing.";
+      } else {
+        els.reasonInferred.textContent = "Suspicion appears manageable from visible behavior.";
+        els.reasonAction.textContent = "Mirror selected services before opening a redirect tunnel.";
+      }
+    }
+
+    function renderActionAvailability() {
+      els.actionButtons.forEach((button) => {
+        const allowed = !state?.validActions || state.validActions.has(button.dataset.action);
+        button.disabled = pendingRequests > 0 || !allowed;
+        button.style.opacity = allowed ? "" : "0.42";
+      });
+    }
+
+    function renderLog() {
+      els.logCount.textContent = `${state.events.length} events`;
+      els.eventLog.innerHTML = state.events.map((entry) => `
+        <div class="log-entry ${entry.kind === "danger" ? "danger" : entry.kind === "warning" ? "warning" : ""}">
+          <strong>Step ${entry.step}</strong> ${entry.message}
+        </div>
+      `).join("");
+    }
+
+    function renderTuningControls() {
+      els.stealthValue.textContent = Number(els.stealthWeight.value).toFixed(2);
+      els.exploreValue.textContent = Number(els.explorationRate.value).toFixed(2);
+      els.learnValue.textContent = Number(els.learningRate.value).toFixed(2);
+    }
+
+    function render() {
+      renderSceneState();
+      renderPhases();
+      renderStats();
+      renderSelected();
+      renderReasoning();
+      renderActionAvailability();
+      renderLog();
+      renderTuningControls();
+      drawCurve();
+    }
+
+    function animate(time) {
+      requestAnimationFrame(animate);
+      controls.update();
+      honeypotCore.rotation.y += 0.01;
+      honeypotRing.rotation.z += 0.012;
+
+      if (state?.attackerNode) {
+        const target = getNodeVector(state.attackerNode).add(new THREE.Vector3(0, 1.05, 0));
+        attackerPacket.position.lerp(target, 0.035);
+      }
+
+      tunnelGroup.children.forEach((line) => {
+        const age = (performance.now() - line.userData.birth) / 1000;
+        line.material.opacity = 0.45 + Math.sin(time * 0.006 + age) * 0.22;
+      });
+
+      for (let i = pulseGroup.children.length - 1; i >= 0; i -= 1) {
+        const pulse = pulseGroup.children[i];
+        const age = (performance.now() - pulse.userData.birth) / 900;
+        pulse.scale.setScalar(1 + age * 1.8);
+        pulse.material.opacity = Math.max(0, 0.85 - age);
+        if (age > 1) pulseGroup.remove(pulse);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function onCanvasClick(event) {
+      const canvas = renderer.domElement;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) return;
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const meshes = [...nodeMeshes.values()].map((item) => item.mesh);
+      const hits = raycaster.intersectObjects(meshes);
+      if (!hits.length) return;
+      state.selected = hits[0].object.userData.nodeId;
+      render();
+    }
+
+    function onResize() {
+      const { w, h } = viewportSize();
+      if (w < 4 || h < 4) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    const viewportObserver = new ResizeObserver(() => onResize());
+    viewportObserver.observe(root);
+
+    document.querySelectorAll("[data-action]").forEach((button) => {
+      button.addEventListener("click", () => step(button.dataset.action));
+    });
+
+    [els.stealthWeight, els.explorationRate, els.learningRate].forEach((input) => {
+      input.addEventListener("input", () => {
+        renderTuningControls();
+        renderStats();
+      });
+    });
+
+    els.resetBtn.addEventListener("click", reset);
+    els.taskSelect.addEventListener("change", reset);
+    els.autoGood.addEventListener("click", () => runStrategy("good"));
+    els.autoBad.addEventListener("click", () => runStrategy("bad"));
+    els.trainBtn.addEventListener("click", tuneModel);
+    els.dismissAlert.addEventListener("click", () => els.alertToast.classList.add("hidden"));
+    renderer.domElement.addEventListener("click", onCanvasClick);
+    window.addEventListener("resize", onResize);
+    requestAnimationFrame(() => onResize());
+
+    reset();
+    animate();
+  </script>
+</body>
+</html>

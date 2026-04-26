@@ -1,0 +1,94 @@
+{
+  "trained": {
+    "shadow-easy": {
+      "stealthy": {
+        "avg_score": 0.662,
+        "avg_combined_reward": 0.713,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "aggressive": {
+        "avg_score": 0.519,
+        "avg_combined_reward": 0.614,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "noisy": {
+        "avg_score": 0.519,
+        "avg_combined_reward": 0.613,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "adaptive": {
+        "avg_score": 0.519,
+        "avg_combined_reward": 0.613,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      }
+    },
+    "shadow-medium": {
+      "stealthy": {
+        "avg_score": 0.594,
+        "avg_combined_reward": 0.666,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "aggressive": {
+        "avg_score": 0.408,
+        "avg_combined_reward": 0.535,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "noisy": {
+        "avg_score": 0.436,
+        "avg_combined_reward": 0.555,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "adaptive": {
+        "avg_score": 0.546,
+        "avg_combined_reward": 0.632,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      }
+    },
+    "shadow-hard": {
+      "stealthy": {
+        "avg_score": 0.385,
+        "avg_combined_reward": 0.519,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "aggressive": {
+        "avg_score": 0.413,
+        "avg_combined_reward": 0.539,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "noisy": {
+        "avg_score": 0.418,
+        "avg_combined_reward": 0.542,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      },
+      "adaptive": {
+        "avg_score": 0.368,
+        "avg_combined_reward": 0.507,
+        "collapse_rate": 0.0,
+        "parse_failures": 0,
+        "episodes": 3
+      }
+    }
+  }
+}

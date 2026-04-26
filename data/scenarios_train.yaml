@@ -1,0 +1,95 @@
+# All 15 ShadowNet training scenarios (registry mirror of data.py).
+# Full graph + attacker_path live in data.py; this file is for discovery,
+# docs, and CI validation that YAML ids match ALL_SCENARIOS.
+
+scenarios:
+  - id: shadow-easy-1
+    name: "Retail POS Breach"
+    difficulty: easy
+    max_steps: 20
+    critical_asset: user-database
+    attack_source: "Target 2013 POS Breach"
+  - id: shadow-easy-2
+    name: "Credential Stuffing Attack"
+    difficulty: easy
+    max_steps: 20
+    critical_asset: customer-records
+    attack_source: "Generic Credential Stuffing"
+  - id: shadow-easy-3
+    name: "SSH Brute Force Intrusion"
+    difficulty: easy
+    max_steps: 20
+    critical_asset: source-repo
+    attack_source: "SSH Brute Force Pattern"
+  - id: shadow-easy-4
+    name: "Phishing to Mailbox Exfil"
+    difficulty: easy
+    max_steps: 20
+    critical_asset: cloud-storage
+    attack_source: "Business Email Compromise"
+  - id: shadow-easy-5
+    name: "DNS Tunneling Exfil"
+    difficulty: easy
+    max_steps: 20
+    critical_asset: hr-database
+    attack_source: "DNS Tunneling via DNSCat2"
+  - id: shadow-medium-1
+    name: "Uber Social Engineering"
+    difficulty: medium
+    max_steps: 16
+    critical_asset: payment-processor
+    attack_source: "Uber 2022 Social Engineering Breach"
+  - id: shadow-medium-2
+    name: "Supply Chain Backdoor"
+    difficulty: medium
+    max_steps: 16
+    critical_asset: production-api
+    attack_source: "SolarWinds 2020 (simplified)"
+  - id: shadow-medium-3
+    name: "Healthcare Records Theft"
+    difficulty: medium
+    max_steps: 16
+    critical_asset: medical-records-db
+    attack_source: "Anthem 2015 Healthcare Breach"
+  - id: shadow-medium-4
+    name: "Cloud IAM Escalation"
+    difficulty: medium
+    max_steps: 16
+    critical_asset: s3-data-lake
+    attack_source: "Capital One 2019 SSRF + IAM Escalation"
+  - id: shadow-medium-5
+    name: "Ransomware Lateral Spread"
+    difficulty: medium
+    max_steps: 16
+    critical_asset: domain-controller
+    attack_source: "Ryuk Ransomware Campaign Pattern"
+  - id: shadow-hard-1
+    name: "SolarWinds APT Campaign"
+    difficulty: hard
+    max_steps: 12
+    critical_asset: update-distribution
+    attack_source: "SolarWinds 2020 APT29 (SUNBURST)"
+  - id: shadow-hard-2
+    name: "Colonial Pipeline OT Attack"
+    difficulty: hard
+    max_steps: 12
+    critical_asset: scada-controller
+    attack_source: "Colonial Pipeline 2021 (DarkSide)"
+  - id: shadow-hard-3
+    name: "Exchange Zero-Day (ProxyLogon)"
+    difficulty: hard
+    max_steps: 12
+    critical_asset: certificate-authority
+    attack_source: "Hafnium ProxyLogon 2021"
+  - id: shadow-hard-4
+    name: "Kubernetes Cluster Takeover"
+    difficulty: hard
+    max_steps: 12
+    critical_asset: etcd-cluster
+    attack_source: "Tesla 2018 Kubernetes + Modern k8s Attack Chains"
+  - id: shadow-hard-5
+    name: "Financial SWIFT Network Breach"
+    difficulty: hard
+    max_steps: 12
+    critical_asset: swift-terminal
+    attack_source: "Bangladesh Bank 2016 SWIFT Heist (Lazarus Group)"

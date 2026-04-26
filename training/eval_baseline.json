@@ -1,0 +1,306 @@
+{
+  "baseline": {
+    "shadow-easy": {
+      "stealthy": {
+        "avg_score": 0.627,
+        "scores": [
+          0.689,
+          0.827,
+          0.537,
+          0.512,
+          0.568
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "aggressive": {
+        "avg_score": 0.534,
+        "scores": [
+          0.509,
+          0.545,
+          0.567,
+          0.512,
+          0.539
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "noisy": {
+        "avg_score": 0.523,
+        "scores": [
+          0.509,
+          0.545,
+          0.537,
+          0.512,
+          0.512
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "adaptive": {
+        "avg_score": 0.523,
+        "scores": [
+          0.509,
+          0.545,
+          0.537,
+          0.512,
+          0.512
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      }
+    },
+    "shadow-medium": {
+      "stealthy": {
+        "avg_score": 0.567,
+        "scores": [
+          0.647,
+          0.599,
+          0.518,
+          0.594,
+          0.475
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "aggressive": {
+        "avg_score": 0.492,
+        "scores": [
+          0.475,
+          0.498,
+          0.499,
+          0.514,
+          0.475
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "noisy": {
+        "avg_score": 0.502,
+        "scores": [
+          0.524,
+          0.498,
+          0.499,
+          0.514,
+          0.475
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "adaptive": {
+        "avg_score": 0.502,
+        "scores": [
+          0.524,
+          0.498,
+          0.499,
+          0.514,
+          0.475
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      }
+    },
+    "shadow-hard": {
+      "stealthy": {
+        "avg_score": 0.539,
+        "scores": [
+          0.614,
+          0.466,
+          0.589,
+          0.511,
+          0.516
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "aggressive": {
+        "avg_score": 0.465,
+        "scores": [
+          0.471,
+          0.466,
+          0.465,
+          0.47,
+          0.454
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "noisy": {
+        "avg_score": 0.465,
+        "scores": [
+          0.471,
+          0.466,
+          0.465,
+          0.47,
+          0.454
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "adaptive": {
+        "avg_score": 0.465,
+        "scores": [
+          0.471,
+          0.466,
+          0.465,
+          0.47,
+          0.454
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      }
+    }
+  },
+  "random": {
+    "shadow-easy": {
+      "stealthy": {
+        "avg_score": 0.439,
+        "scores": [
+          0.375,
+          0.427,
+          0.545,
+          0.429,
+          0.421
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "aggressive": {
+        "avg_score": 0.454,
+        "scores": [
+          0.439,
+          0.427,
+          0.425,
+          0.429,
+          0.551
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "noisy": {
+        "avg_score": 0.395,
+        "scores": [
+          0.269,
+          0.426,
+          0.427,
+          0.429,
+          0.425
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "adaptive": {
+        "avg_score": 0.417,
+        "scores": [
+          0.378,
+          0.426,
+          0.427,
+          0.429,
+          0.425
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      }
+    },
+    "shadow-medium": {
+      "stealthy": {
+        "avg_score": 0.422,
+        "scores": [
+          0.422,
+          0.425,
+          0.424,
+          0.428,
+          0.413
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "aggressive": {
+        "avg_score": 0.399,
+        "scores": [
+          0.425,
+          0.425,
+          0.377,
+          0.428,
+          0.338
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "noisy": {
+        "avg_score": 0.397,
+        "scores": [
+          0.422,
+          0.425,
+          0.377,
+          0.428,
+          0.335
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "adaptive": {
+        "avg_score": 0.398,
+        "scores": [
+          0.424,
+          0.425,
+          0.377,
+          0.428,
+          0.335
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      }
+    },
+    "shadow-hard": {
+      "stealthy": {
+        "avg_score": 0.438,
+        "scores": [
+          0.42,
+          0.426,
+          0.388,
+          0.428,
+          0.53
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "aggressive": {
+        "avg_score": 0.372,
+        "scores": [
+          0.322,
+          0.426,
+          0.349,
+          0.428,
+          0.337
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "noisy": {
+        "avg_score": 0.386,
+        "scores": [
+          0.424,
+          0.424,
+          0.396,
+          0.428,
+          0.257
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      },
+      "adaptive": {
+        "avg_score": 0.376,
+        "scores": [
+          0.373,
+          0.424,
+          0.396,
+          0.428,
+          0.257
+        ],
+        "collapse_rate": 0.0,
+        "episodes": 5
+      }
+    }
+  }
+}

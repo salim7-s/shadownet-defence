@@ -1,0 +1,51 @@
+# OpenEnv / HF Spaces manifest (tooling)
+spec_version: 1
+name: shadownet
+type: space
+runtime: fastapi
+app: server.app:app
+port: 7860
+
+version: "1.0"
+metadata:
+  name: "ShadowNet"
+  description: "Deceptive containment RL environment — trains AI agents to trap network intruders without alerting them. Features hidden detection risk, 3-phase gameplay, and 6-signal composite reward."
+  version: "1.0.0"
+  author: "ShadowNet Team"
+  tags: ["cybersecurity", "deceptive-defense", "theory-of-mind", "partial-observability", "multi-phase"]
+  inference_script: "inference.py"
+
+environment:
+  type: "dict"
+  observation_space:
+    type: "dict"
+    description: "Contains network visibility, anomalous nodes, behavioral signals, and available forensic artifacts."
+  action_space:
+    type: "dict"
+    description: "Actions include observe, mirror_traffic, redirect, loud_contain, partial_covert, wait_and_track, lock_artifact, emergency_expel."
+
+endpoints:
+  reset: "/reset"
+  step: "/step"
+  state: "/state"
+  tasks: "/tasks"
+  grader: "/grader"
+  baseline: "/baseline"
+  health: "/health"
+
+tasks:
+  - id: shadow-easy
+    name: "shadow-easy"
+    difficulty: easy
+    description: "5-node network, slow attacker, obvious path. Learn observation and basic containment."
+    score_range: [0.01, 0.99]
+  - id: shadow-medium
+    name: "shadow-medium"
+    difficulty: medium
+    description: "8-node network, decoy paths, race conditions. Learn attacker modeling and sequencing."
+    score_range: [0.01, 0.99]
+  - id: shadow-hard
+    name: "shadow-hard"
+    difficulty: hard
+    description: "12-node network, fast attacker, multiple pivot paths, 1 critical asset. Master stealth containment."
+    score_range: [0.01, 0.99]

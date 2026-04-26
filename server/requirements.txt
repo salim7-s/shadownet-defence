@@ -1,0 +1,5 @@
+# Server runtime (mirrors project root; HF Spaces / Docker can COPY this only)
+openenv-core>=0.2.3
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0

@@ -1,0 +1,31 @@
+# Attacker pool for ShadowNet — one profile sampled per episode.
+# Tuning knobs: speed, noise, pivot_prob, detection_sensitivity.
+# Kept in sync with environment.ATTACKER_PROFILES (validated in tests).
+#
+# Schema per profile (floats 0.0–1.3+ where noted):
+#   speed                  — path progression rate vs scripted steps
+#   noise                  — query frequency / SIEM signal strength
+#   pivot_prob             — probability of deviating from attack_path
+#   detection_sensitivity  — how quickly hidden detection_risk triggers "alerted"
+
+profiles:
+  stealthy:
+    speed: 0.7
+    noise: 0.3
+    pivot_prob: 0.4
+    detection_sensitivity: 0.9
+  aggressive:
+    speed: 1.3
+    noise: 0.8
+    pivot_prob: 0.7
+    detection_sensitivity: 0.3
+  noisy:
+    speed: 1.0
+    noise: 1.0
+    pivot_prob: 0.5
+    detection_sensitivity: 0.2
+  adaptive:
+    speed: 1.0
+    noise: 0.5
+    pivot_prob: 0.6
+    detection_sensitivity: 1.0

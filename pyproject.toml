@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadownet"
+version = "1.0.0"
+description = "Deceptive containment RL environment for training AI agents in active cyber defense"
+requires-python = ">=3.10"
+dependencies = [
+    "openenv-core>=0.2.3",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.5.0",
+    "pyyaml>=6.0.0",
+]
+
+[project.optional-dependencies]
+training = [
+    "trl>=0.12",
+    "transformers>=4.45",
+    "accelerate",
+    "peft",
+    "wandb",
+    "torch",
+    "datasets",
+    "unsloth",
+]

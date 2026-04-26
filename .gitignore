@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Training artifacts (keep only final)
+training/*.jsonl
+training/sft_*.jsonl
+training/checkpoints/
+*.ckpt
+*.pt
+!training/sft_loss_curve.png
+!training/trained_vs_baseline_heatmap_better.png
+
+# Temporary files
+*.tmp
+*.log
+.env
+
+# Large checkpoint files (85+ MB - exclude from Space deployment)
+# Upload to HF Hub model repo or keep local only
+artifacts/shadownet-sft-adapter/*.safetensors
+artifacts/shadownet-sft-adapter/tokenizer.json
+
+# Keep small config files for reference
+!artifacts/shadownet-sft-adapter/adapter_config.json
+!artifacts/shadownet-sft-adapter/chat_template.jinja
+!artifacts/shadownet-sft-adapter/tokenizer_config.json
+!artifacts/shadownet-sft-adapter/trainer_state.json
+
+# Documentation drafts (keep only final)
+*_DRAFT.md
+*_OLD.md
