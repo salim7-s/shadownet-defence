@@ -188,8 +188,5 @@ The SFT results show it's learnable—at least partially. The hard scenarios sho
 
 **Links**
 
-- **GitHub:** https://github.com/salim7-s/ShadowNet-When-Defense-Thinks-Like-the-Attacker
-- **Colab:** [Open training notebook](https://colab.research.google.com/github/salim7-s/ShadowNet-When-Defense-Thinks-Like-the-Attacker/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb)
+- **GitHub:** https://github.com/salim7-s/shadownet-defence.git
 - **Hugging Face Space:** [zizoha/shadownet-Cops](https://huggingface.co/spaces/zizoha/shadownet-Cops)
-- **W&B Training Run:** [YOUR-WANDB-URL]
-- **Demo Video:** [YOUR-YOUTUBE-URL]
