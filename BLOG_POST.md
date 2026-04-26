@@ -176,6 +176,19 @@ ShadowNet is a step toward training the other kind of behavior.
 
 ---
 
+## Constraints and what we'd do differently
+
+The training run we submitted was undercooked by design — a 1.5B model, low epochs, no full RL loop. The goal was to validate the environment and demonstrate that meaningful defensive behavior is learnable from it. That goal was met.
+
+But we are under no illusion about the ceiling. The model did not get nearly enough training to show what this environment can actually produce. We had limited iteration time toward the end of the hackathon, which meant the training pipeline got less attention than it deserved.
+
+With a proper run — more epochs, a richer scenario dataset, and a full GRPO/RL phase on top of SFT — we would expect significantly stronger results, particularly on hard attacker profiles where the current model still falls short of baseline.
+
+The environment is ready for it. That is the real takeaway.
+
+
+---
+
 ## Final thought
 
 The smartest defensive action is often the one that buys information before it buys certainty.
@@ -188,5 +201,5 @@ The SFT results show it's learnable—at least partially. The hard scenarios sho
 
 **Links**
 
-- **GitHub:** https://github.com/salim7-s/shadownet-defence.git
+- **GitHub:** [salim7-s/shadownet-defence](https://github.com/salim7-s/shadownet-defence)
 - **Hugging Face Space:** [zizoha/shadownet-Cops](https://huggingface.co/spaces/zizoha/shadownet-Cops)
