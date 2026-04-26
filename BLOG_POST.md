@@ -102,7 +102,7 @@ The current path in this repo uses supervised fine-tuning as a starting point:
 
 - **Base model:** `Qwen/Qwen2.5-1.5B-Instruct`
 - **Method:** LoRA adapters via TRL SFTTrainer
-- **Notebook:** [ShadowNet_SFT_Colab.ipynb](notebooks/ShadowNet_SFT_Colab.ipynb) — designed to be easy to rerun
+- **Notebook:** [ShadowNet_SFT_Colab.ipynb](https://huggingface.co/spaces/zizoha/shadownet-Cops/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb) — designed to be easy to rerun
 - **Adapter:** [artifacts/shadownet-sft-adapter](artifacts/shadownet-sft-adapter)
 
 The training notebook is public and the adapter is committed to the repo along with the saved training state needed to regenerate the loss graph.

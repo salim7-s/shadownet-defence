@@ -17,9 +17,9 @@ ShadowNet asks whether a language model can learn to do the same thing.
 
 ---
 
-**Quick links:** [Blog Post](BLOG_POST.md) · [Training Guide](TRAINING.md) · [Colab Notebook](notebooks/ShadowNet_SFT_Colab.ipynb) · [License](LICENSE)
+**Quick links:** [Blog Post](BLOG_POST.md) · [Training Guide](TRAINING.md) · [Hugging Face Notebook](https://huggingface.co/spaces/zizoha/shadownet-Cops/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb) · [License](LICENSE)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/salim7-s/ShadowNet-When-Defense-Thinks-Like-the-Attacker/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb)
+**Training Notebook:** [Open in Hugging Face Space](https://huggingface.co/spaces/zizoha/shadownet-Cops/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb)
 
 ---
 
@@ -239,20 +239,9 @@ ShadowNet is fundamentally stateful — the next observation depends on what the
 
 ---
 
-## Deployment checklist
-
-- [ ] Push repo to GitHub
-- [ ] Deploy Docker Space on Hugging Face
-- [ ] Verify `/health`, `/tasks`, `/baseline`, `/demo/compare`
-- [ ] Keep the Colab notebook public
-- [ ] Keep the Space public
-- [ ] Add public Space URL below
-- [ ] Add public W&B run URL below
-- [ ] Add demo video link below
-
----
-
 ## Links
 
 - **GitHub:** [salim7-s/shadownet-defence](https://github.com/salim7-s/shadownet-defence)
 - **Hugging Face Space:** [zizoha/shadownet-Cops](https://huggingface.co/spaces/zizoha/shadownet-Cops)
+- **Training Notebook:** [Open in Hugging Face](https://huggingface.co/spaces/zizoha/shadownet-Cops/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb)
+- **Blog Post:** [BLOG_POST.md](BLOG_POST.md)
