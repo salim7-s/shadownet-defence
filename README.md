@@ -1,3 +1,12 @@
+---
+title: ShadowNet
+emoji: 🛡️
+colorFrom: gray
+colorTo: red
+sdk: docker
+pinned: false
+---
+
 # ShadowNet
 
 **Deceptive containment for cyber defense agents.**
