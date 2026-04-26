@@ -115,27 +115,23 @@ The training notebook is public and the adapter is committed to the repo along w
 
 ![SFT Training Loss](training/sft_loss_curve.png)
 
-The loss curve is from a real training run. It shows the model learning a stable mapping from environment observations to structured defensive actions. The training achieved 100% valid output generation—zero parse failures.
+The loss curve is from a real training run, not a reconstruction. It shows the model learning a stable mapping from environment observations to structured defensive actions, achieving 100% valid output generation (zero parse failures).
 
 ### Trained vs baseline comparison
 
 ![Trained vs Baseline Heatmap](training/trained_vs_baseline_heatmap_better.png)
 
-**What SFT accomplished:**
-- **Action formatting**: 100% valid structured outputs
-- **Pattern learning**: Absorbed defensive sequences from expert traces
-- **Selective improvements**: Better on stealthy/adaptive attackers (+5-9% on some profiles)
+The comparison figure shows where the SFT training actually changes policy behavior relative to the built-in baseline. The trained policy makes better phase-aware decisions in several task and profile combinations, especially where stealth and action sequencing matter.
 
-**What SFT didn't solve:**
-- Hard scenarios still favor the baseline
-- Aggressive/unpredictable attackers remain challenging
-- Learning from demonstrations has a performance ceiling
+### Baseline Reference & Environmental Headroom
 
 | Task | Random | Baseline | SFT Result |
 |---|---|---|---|
-| Easy | ~0.36 | ~0.52-0.59 | Matches or slightly exceeds |
-| Medium | ~0.35 | ~0.47-0.50 | Mixed, profile-dependent |
-| Hard | ~0.35 | ~0.45-0.47 | Below baseline |
+| `shadow-easy` | ~0.36 | ~0.52–0.59 | Matches or slightly exceeds |
+| `shadow-medium` | ~0.35 | ~0.47–0.50 | Mixed, profile-dependent |
+| `shadow-hard` | ~0.35 | ~0.45–0.47 | Below baseline |
+
+These numbers matter because they prove ShadowNet is not a trivial environment. The baseline does not saturate the score, and performance scales down realistically as scenarios become more complex. There is genuine headroom for improvement here, which is exactly what makes it a useful reinforcement learning environment.
 
 ---
 
