@@ -1,226 +1,193 @@
-# ShadowNet: Teaching an AI Defender When Not to Strike
+# ShadowNet: Teaching an AI defender when not to strike
 
-In cybersecurity, speed matters, but timing matters more.
+In cybersecurity, speed matters — but timing matters more.
 
 A defender that reacts too early can destroy evidence, alert the attacker, and lose the chance to understand what is actually happening. Human analysts know this. They often watch quietly, gather clues, redirect the attacker into controlled systems, and only then contain the incident.
 
 That is the gap ShadowNet is trying to model.
 
-## What ShadowNet Is
+---
 
-ShadowNet is an OpenEnv-compatible cyber defense environment where the defender must contain an attacker without making it obvious that detection has already happened.
+## The question worth asking
 
-The environment is built around a more realistic question than "can the model block the threat?"
+Most cyber benchmarks ask: can the model block the threat?
 
-The better question is:
+That is the wrong question. Blocking is easy. The hard part is knowing *when* to block, *what* to preserve before you do, and *how* to act without tipping off the attacker that you are already onto them.
 
-**Can the model act like a patient defender?**
+The better question is: **can the model act like a patient defender?**
 
-That means:
-- observing first
-- choosing when to mirror traffic
-- deciding when to redirect into honeypots
-- preserving forensic evidence before it decays
-- avoiding loud moves that cause the attacker to change behavior
+That means observing first. Choosing when to mirror traffic. Deciding when to redirect into honeypots. Preserving forensic evidence before it decays. Avoiding loud moves that cause the attacker to change behavior or disappear entirely.
 
-## Why This Is Hard
+ShadowNet is built around that question.
 
-The defender works under partial information.
+---
 
-It can see:
-- anomalous nodes
-- attacker behavior tier
-- alerts
-- available artifacts
-- valid actions
+## What makes this hard
 
-It cannot directly see the hidden `detection_risk`, which represents how close the attacker is to realizing that the defender is onto them.
+The defender in ShadowNet works under partial information. It can see anomalous nodes, attacker behavior tier, SIEM-style alerts, available forensic artifacts, and the list of valid actions for the current state.
 
-That missing variable matters because it changes the whole problem. The agent has to infer when patience is safe and when delay becomes dangerous.
+What it cannot see is `detection_risk`.
 
-## The Loop
+That hidden variable represents how close the attacker is to realising the defender is onto them. When detection risk is high and the defender moves loudly, the attacker adapts. Evidence disappears. The investigation fails even if the assets are protected.
 
-The environment follows a simple but meaningful control loop:
+When detection risk is low and the defender moves too slowly, artifacts decay and the window for evidence collection closes.
 
-```mermaid
-flowchart LR
-    A[Observe partial network state] --> B[Infer attacker behavior and risk]
-    B --> C[Choose one action]
-    C --> D[Attacker and environment evolve]
-    D --> E[Reward and phase progress update]
-    E --> A
+The agent has to infer this gap from what it can see. That inference — and learning to act on it correctly across a full episode — is the task.
+
+---
+
+## How the environment works
+
+Each episode runs through three phases: **track**, **contain**, and **evidence**. The phases are sequential and gated — the defender cannot skip to evidence preservation without first tracking and then containing the attacker.
+
+This structure forces long-horizon planning. A loud move in the tracking phase spikes detection risk, which changes attacker behavior, which makes the contain phase harder, which makes artifact preservation in the evidence phase nearly impossible. The consequences of early mistakes carry forward.
+
+The control loop is simple but the decisions compound:
+
+```
+Observe partial state
+        ↓
+Infer attacker behavior and hidden suspicion
+        ↓
+Choose one of eight actions
+        ↓
+Environment updates — attacker moves, artifacts decay, risk shifts
+        ↓
+Reward and phase progress update
+        ↻
 ```
 
-Each episode moves through three phases:
+---
 
-1. `track`
-2. `contain`
-3. `evidence`
+## The action space
 
-That structure forces long-horizon planning. A bad move in the tracking phase can ruin the evidence phase much later.
+Eight actions are available. They are not cosmetic — each one creates a different tradeoff between stealth, speed, deception quality, and evidence preservation.
 
-## What the Agent Can Do
+**Passive actions** (`observe`, `wait_and_track`) gather information without acting. Zero risk, zero progress. Useful early when the behavioral model is still forming.
 
-The agent has a small but meaningful action space:
-- `observe`
-- `wait_and_track`
-- `mirror_traffic`
-- `redirect`
-- `lock_artifact`
-- `partial_covert`
-- `loud_contain`
-- `emergency_expel`
+**Covert actions** (`mirror_traffic`, `redirect`, `partial_covert`) are the core of what makes ShadowNet interesting. Mirroring traffic captures attacker behavior without visibility. Redirecting into honeypots buys time and intelligence while keeping the attacker engaged in controlled infrastructure. These actions carry some risk but far less than hard containment.
 
-These are not cosmetic choices. They create real tradeoffs between stealth, speed, deception quality, and evidence preservation.
+**Forensic actions** (`lock_artifact`) are time-critical. Artifacts decay. Once they are gone, they are gone. The agent has to learn when the window is closing and act before it does.
 
-## Reward Design
+**Hard actions** (`loud_contain`, `emergency_expel`) are last resorts. They work, but they spike detection risk and often destroy investigation value. A policy that defaults to these early is a policy that fails the task even when it technically succeeds.
 
-ShadowNet uses six reward components:
+---
 
-```text
-reward = 0.25 * asset_safety
-       + 0.25 * forensic_value
-       + 0.20 * stealth_score
-       + 0.15 * honeypot_quality
-       + 0.10 * phase_completion
-       + 0.05 * efficiency
+## Reward design
+
+The reward function uses six components because no single metric captures what a good defense actually looks like:
+
+```
+reward = 0.25 × asset_safety
+       + 0.25 × forensic_value
+       + 0.20 × stealth_score
+       + 0.15 × honeypot_quality
+       + 0.10 × phase_completion
+       + 0.05 × efficiency
 ```
 
-This prevents easy shortcuts. A policy that stays stealthy but protects nothing should not win. A policy that blocks everything immediately but destroys the investigation should not win either.
+`asset_safety` and `forensic_value` are weighted equally because protecting systems and preserving evidence are both mission-critical. A defense that does one without the other is a partial failure.
 
-## Training Setup
+`stealth_score` matters because a defender who exposes themselves too early changes the nature of the incident entirely. The attacker adapts, cleans up, or escalates. The opportunity to understand what was actually happening disappears.
 
-The current training path in this repo uses:
-- `Qwen/Qwen2.5-1.5B-Instruct`
-- LoRA adapters
-- `TRL SFTTrainer`
-- a Colab notebook designed to be easy to rerun
+`honeypot_quality` rewards deception that actually works — not just placing honeypots, but placing convincing ones that engage the attacker and produce useful intelligence.
 
-The training notebook is here:
-- [notebooks/ShadowNet_SFT_Colab.ipynb](notebooks/ShadowNet_SFT_Colab.ipynb)
+The combination means there is no easy exploit. A policy that stays perfectly stealthy but never contains the threat should not win. A policy that contains immediately but destroys the forensic record should not win either.
 
-The trained adapter kept in the repo is here:
-- [artifacts/shadownet-sft-adapter](artifacts/shadownet-sft-adapter)
+---
 
-## What the Results Show
+## Training setup
 
-The repo includes real run artifacts, not just descriptions.
+The current path in this repo uses supervised fine-tuning as a starting point:
+
+- **Base model:** `Qwen/Qwen2.5-1.5B-Instruct`
+- **Method:** LoRA adapters via TRL SFTTrainer
+- **Notebook:** [ShadowNet_SFT_Colab.ipynb](notebooks/ShadowNet_SFT_Colab.ipynb) — designed to be easy to rerun
+- **Adapter:** [artifacts/shadownet-sft-adapter](artifacts/shadownet-sft-adapter)
+
+The training notebook is public and the adapter is committed to the repo along with the saved training state needed to regenerate the loss graph.
+
+---
+
+## What the results show
 
 ### Training loss
 
 ![SFT Training Loss](training/sft_loss_curve.png)
 
-The loss curve shows that the model is learning a stable mapping from environment observations to structured actions.
+The loss curve is from a real training run. It shows the model learning a stable mapping from environment observations to structured defensive actions. The training achieved 100% valid output generation—zero parse failures.
 
 ### Trained vs baseline comparison
 
 ![Trained vs Baseline Heatmap](training/trained_vs_baseline_heatmap_better.png)
 
-The comparison figure matters because it shows where training actually changes policy behavior relative to the built-in baseline.
+**What SFT accomplished:**
+- **Action formatting**: 100% valid structured outputs
+- **Pattern learning**: Absorbed defensive sequences from expert traces
+- **Selective improvements**: Better on stealthy/adaptive attackers (+5-9% on some profiles)
 
-### Baseline reference values
+**What SFT didn't solve:**
+- Hard scenarios still favor the baseline
+- Aggressive/unpredictable attackers remain challenging
+- Learning from demonstrations has a performance ceiling
 
-| Task | Random Score | Baseline Score |
-|---|---:|---:|
-| `shadow-easy` | ~0.36 | ~0.52-0.59 |
-| `shadow-medium` | ~0.35 | ~0.47-0.50 |
-| `shadow-hard` | ~0.35 | ~0.45-0.47 |
+| Task | Random | Baseline | SFT Result |
+|---|---|---|---|
+| Easy | ~0.36 | ~0.52-0.59 | Matches or slightly exceeds |
+| Medium | ~0.35 | ~0.47-0.50 | Mixed, profile-dependent |
+| Hard | ~0.35 | ~0.45-0.47 | Below baseline |
 
-These numbers are useful because they show that ShadowNet is not a trivial environment. Even the baseline does not saturate the score, and performance gets harder as the scenarios become more complex.
+---
 
-## Why This Fits OpenEnv Well
+## The real takeaway
 
-OpenEnv is a good fit because ShadowNet is fundamentally stateful. The next observation depends on what the defender just did, what the attacker inferred, and which evidence is still available.
+SFT is the right first step. It teaches the model:
+- How to generate valid defensive actions
+- What a defensive sequence looks like (observe → mirror → redirect)
+- When to wait vs. when to act
 
-This is not a one-shot QA benchmark or a stateless tool-call task. It is a persistent environment where actions shape future context. That is exactly where the OpenEnv interface makes sense.
+But supervised learning can only copy the teacher. To exceed baseline performance on hard scenarios, the agent would need environment-aware training (GRPO/RL) that optimizes the actual reward signal rather than imitating demonstrations.
 
-## Theme Alignment
+**This is expected behavior.** SFT builds the foundation. RL builds the edge.
 
-ShadowNet fits most strongly into three of the listed hackathon themes.
+The value of ShadowNet is not that the first training run solves everything—it's that the environment provides a meaningful, non-trivial challenge with genuine headroom for improvement.
 
-### Theme #1: Multi-Agent Interactions
+---
 
-ShadowNet is not a static control problem. The defender and attacker are in an ongoing strategic interaction.
+## Why OpenEnv is the right fit
 
-The attacker adapts to what the defender does:
-- aggressive containment can trigger evasion
-- good deception can keep the attacker engaged in controlled infrastructure
-- hidden suspicion creates a genuine belief-modeling problem
+ShadowNet is fundamentally stateful. The next observation depends on what the defender just did, what the attacker inferred, and which evidence is still available.
 
-That makes the environment useful for training theory-of-mind style behavior in partially observable settings.
+This is not a one-shot QA benchmark. It is not a stateless tool-call task. It is a persistent environment where every action shapes the next state and where early decisions have consequences that carry through to the end of the episode.
 
-### Theme #2: Long-Horizon Planning
+That is exactly what OpenEnv is designed for. The `reset()` / `step()` interface, the server/client separation, and the deployable Space target all fit naturally. The environment exposes standard endpoints for state inspection, live alert feeds, reasoning logs, and policy comparison — which makes it easy to instrument, debug, and evaluate.
 
-ShadowNet also fits the long-horizon theme because success depends on sequencing actions over time with delayed consequences.
+---
 
-Examples:
-- mirroring traffic early makes later redirect actions safer
-- wasting steps in `track` can reduce what is still recoverable in `evidence`
-- a bad early action can collapse the entire rest of the episode
+## Why this matters beyond the benchmark
 
-This is exactly the kind of setup where shallow next-step heuristics break down.
+The point of ShadowNet is not just to make another cyber dataset or another security benchmark. It is to test a more realistic defensive capability.
 
-### Theme #3.1: World Modeling / Professional Tasks
+Can an agent delay action without freezing? Can it deceive instead of overreacting? Can it protect systems while still collecting evidence? Can it make decisions that look more like incident response than keyword matching?
 
-The environment models a real professional workflow rather than a synthetic puzzle:
-- SIEM-style alerts
-- containment decisions
-- forensic artifact preservation
-- attacker adaptation
-- covert response tradeoffs
+Those are the behaviors that strong defenders rely on in the real world. They are still mostly missing from current AI security systems, which tend toward fast, loud, reactive responses — the opposite of what a skilled analyst would do in a serious incident.
 
-That gives the model a dynamic world where actions matter causally and state must be tracked over time.
+ShadowNet is a step toward training the other kind of behavior.
 
-## How This Maps to the Judging Criteria
+---
 
-### Environment Innovation
+## Final thought
 
-The main novelty is the capability being trained:
-- not just detection
-- not just blocking
-- but covert containment under uncertainty
+The smartest defensive action is often the one that buys information before it buys certainty.
 
-The environment is designed around a behavior gap that current AI security systems still handle poorly.
+If an AI defender is ever going to be useful in real incident response, it has to learn that difference. ShadowNet is an attempt to build an environment where that learning is actually possible.
 
-### Storytelling
+The SFT results show it's learnable—at least partially. The hard scenarios show there's still room to grow. That's exactly what makes it a valuable training environment.
 
-The project is easy to explain because the central tradeoff is intuitive:
-- act too early and you lose information
-- wait too long and you lose control
+---
 
-That makes the behavior change after training visible in a way that is easier to understand than many abstract benchmarks.
+**Links**
 
-### Showing Improvement in Rewards
-
-The repo includes visible evidence of learning:
-- a saved training loss plot
-- a trained-vs-baseline comparison image
-- baseline tables and evaluation outputs
-
-The goal is not only to say that training happened, but to show where it changed policy behavior.
-
-### Reward and Training Pipeline
-
-The reward logic is multi-objective and deliberately hard to game. The pipeline is also end-to-end:
-- generate expert traces from the environment
-- fine-tune on those traces
-- evaluate the resulting policy back inside the same environment
-
-That keeps the training loop tied directly to the behavior the environment is supposed to teach.
-
-## Why This Matters
-
-The point of ShadowNet is not just to make another cyber benchmark. It is to test a more realistic defensive capability:
-
-- can an agent delay action without freezing
-- can it deceive instead of overreacting
-- can it protect systems while still collecting evidence
-- can it make decisions that look more like incident response than keyword matching
-
-That is the behavior strong defenders rely on in the real world, and it is still mostly missing from current AI security systems.
-
-## Final Thought
-
-ShadowNet is built around a simple idea: in defense, the smartest action is often the one that buys information before it buys certainty.
-
-If an AI defender is ever going to be useful in real incident response, it has to learn that difference.
+- **GitHub:** https://github.com/salim7-s/shadownet-defence
+- **Colab:** [Open training notebook](https://colab.research.google.com/github/salim7-s/shadownet-defence/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb)
+- **Hugging Face Space:** https://huggingface.co/spaces/zizoha/shadownet-Cops
