@@ -1,13 +1,3 @@
----
-title: ShadowNet
-emoji: "🛡️"
-colorFrom: gray
-colorTo: blue
-sdk: docker
-pinned: false
-app_port: 7860
----
-
 # ShadowNet: Deceptive Containment for Cyber Defense Agents
 
 ShadowNet is an OpenEnv-compatible cyber defense environment where the defender is not rewarded for reacting loudly or immediately. The task is to contain an attacker while staying covert long enough to understand what they are doing, redirect them into controlled infrastructure, and preserve evidence before it disappears.
