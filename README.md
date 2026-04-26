@@ -254,9 +254,5 @@ ShadowNet is fundamentally stateful — the next observation depends on what the
 
 ## Links
 
-- **GitHub:** https://github.com/salim7-s/ShadowNet-When-Defense-Thinks-Like-the-Attacker
+- **GitHub:** (https://github.com/salim7-s/shadownet-defence.git)
 - **Hugging Face Space:** [zizoha/shadownet-Cops](https://huggingface.co/spaces/zizoha/shadownet-Cops)
-- **Training Notebook:** [Open in Colab](https://colab.research.google.com/github/salim7-s/ShadowNet-When-Defense-Thinks-Like-the-Attacker/blob/main/notebooks/ShadowNet_SFT_Colab.ipynb)
-- **W&B Training Run:** [YOUR-WANDB-URL]
-- **Blog Post:** [BLOG_POST.md](BLOG_POST.md)
-- **Demo Video:** [YOUR-YOUTUBE-URL]
